@@ -1,0 +1,1 @@
+{"scaler": {"columns": ["close", "volume", "obv"], "mean": {"close": 115.0, "volume": 1014.5, "obv": 14649.833333333334}, "scale": {"close": 8.953904946619852, "volume": 8.65544144839919, "obv": 8785.336742107398}}}

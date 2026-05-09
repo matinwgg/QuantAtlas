@@ -1,0 +1,6 @@
+# Optional ML dependencies for training HMM + LSTM models
+# Install these into your Python environment when you intend to run training:
+hmmlearn
+scikit-learn
+torch
+# If you prefer TensorFlow/Keras instead of PyTorch, install tensorflow instead of torch
