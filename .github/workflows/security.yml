@@ -1,0 +1,30 @@
+name: Security
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python-security:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt bandit
+      - name: Django checks
+        env:
+          DJANGO_SECRET_KEY: ci-only-not-for-production
+          DJANGO_ALLOWED_HOSTS: localhost
+        run: python manage.py check --deploy
+      - name: Bandit
+        run: bandit -r . -x data
