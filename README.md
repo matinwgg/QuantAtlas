@@ -1,6 +1,6 @@
 # QuantAtlas
 
-## 📖 About
+## About
 
 QuantAtlas is a quantitative-finance research and engineering prototype exploring financial data processing, quantitative analysis, modelling, backtesting, portfolio concepts, and software infrastructure for systematic-trading research.
 
@@ -8,7 +8,7 @@ QuantAtlas is a quantitative-finance research and engineering prototype explorin
 
 Quantitative finance turns mathematical assumptions into executable research. QuantAtlas provides a place to experiment with financial data, models, indicators, and backtests while keeping research assumptions explicit and reproducible.
 
-## ✨ Features / Scope
+## Features / Scope
 
 - Market-data processing
 - Quantitative indicators and models
@@ -18,14 +18,14 @@ Quantitative finance turns mathematical assumptions into executable research. Qu
 - Django-based backend components
 - Data/model experimentation
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - Python
 - Django / Django REST Framework components
 - Scientific/data tooling defined by the backend dependencies
 - Relational database support
 
-## 🏗 Architecture
+## Architecture
 
 ```text
 Market / research data
@@ -41,7 +41,7 @@ Backtest / portfolio evaluation
 Metrics + experiment artifacts
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```text
 .
@@ -52,13 +52,13 @@ Metrics + experiment artifacts
 └── README.md
 ```
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.11+
 - pip
 - Database service required by the selected backend configuration
 
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
 git clone https://github.com/matinwgg/QuantAtlas.git
@@ -67,7 +67,7 @@ cd QuantAtlas
 
 Install the backend dependencies from `backend/requirements.txt`, configure environment variables, run database migrations, and start the Django service using the repository's current deployment configuration.
 
-## 💻 Usage
+## Usage
 
 A research workflow should be:
 
@@ -77,19 +77,19 @@ A research workflow should be:
 4. Run the backtest on strictly separated evaluation data.
 5. Report returns, volatility, drawdown, turnover, and risk-adjusted metrics.
 
-## 🧮 Mathematical Foundations
+## Mathematical Foundations
 
 QuantAtlas uses probability, statistics, time-series analysis, covariance/correlation, regression, stationarity, numerical optimization, stochastic-process concepts, risk measures, and statistical model validation.
 
-## 🧪 Testing & Research Validity
+## Testing & Research Validity
 
 Tests should cover data boundaries, deterministic calculations, API behavior, and model invariants. Backtests should explicitly address look-ahead bias, survivorship bias, transaction costs, slippage, multiple testing, and overfitting.
 
-## 🔐 Security & Reliability
+## Security & Reliability
 
 Financial software requires strict secret management, authentication/authorization, input validation, auditability, data integrity, reproducibility, and separation between research and real-money execution. This repository is **not** production trading infrastructure or investment advice.
 
-## 🚧 Future Work
+## Future Work
 
 - Complete environment-based production configuration
 - Authentication/RBAC for API surfaces
@@ -99,14 +99,14 @@ Financial software requires strict secret management, authentication/authorizati
 - Risk and portfolio analytics
 - CI/CD and security scanning
 
-## 🤝 Contributing
+## Contributing
 
 Research contributions should document datasets, time periods, assumptions, leakage controls, evaluation methodology, and statistical limitations.
 
-## 📄 License
+## License
 
 See repository license information.
 
-## 👨‍💻 Author
+## Author
 
-**Matin Odoom**
+**A. Matin Odoom**
