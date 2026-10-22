@@ -8,6 +8,7 @@ import numpy as np
 import yfinance as yf  # type: ignore
 
 from .data_sources import detect_market
+from ..utils.helpers import validate_symbol
 
 # Base data directory (relative to backend/)
 BASE_DATA_DIR = Path(__file__).resolve().parents[2] / "data"
@@ -24,6 +25,8 @@ def fetch_us_data(symbol: str, period="2y", interval="1d", start: str | None = N
     Supports either `period` or (`start`, `end`). If `yfinance` is not
     installed, raises an informative error.
     """
+
+    symbol = validate_symbol(symbol)
 
     if yf is None:
         raise RuntimeError("yfinance is not available. Install with `pip install yfinance` to fetch live data.")
@@ -64,7 +67,10 @@ def fetch_gse_data(symbol: str):
     date, open, high, low, close, volume
     """
 
+    symbol = validate_symbol(symbol)
     path = BASE_DATA_DIR / "gse" / f"{symbol}.csv"
+    if not path.resolve().is_relative_to(BASE_DATA_DIR.resolve()):
+        raise ValueError("Invalid GSE data path")
 
     if not path.exists():
         raise FileNotFoundError(f"GSE CSV not found at {path}")
@@ -91,6 +97,7 @@ def fetch_market_data(symbol: str, period="2y", interval="1d"):
     For US symbols we may optionally read/update a local raw cache.
     """
 
+    symbol = validate_symbol(symbol)
     market = detect_market(symbol)
 
     if market == "US":
@@ -107,7 +114,11 @@ def fetch_market_data(symbol: str, period="2y", interval="1d"):
 
 
 def _raw_cache_path(symbol: str, market: str) -> Path:
-    return RAW_DATA_DIR / market.lower() / f"{symbol}.csv"
+    symbol = validate_symbol(symbol)
+    path = RAW_DATA_DIR / market.lower() / f"{symbol}.csv"
+    if not path.resolve().is_relative_to(RAW_DATA_DIR.resolve()):
+        raise ValueError("Invalid raw cache path")
+    return path
 
 
 def load_raw_cache(symbol: str, market: str):
@@ -131,6 +142,7 @@ def update_raw_data(symbol: str, market: str, interval: str = "1d") -> pd.DataFr
 
     If no cache exists, fetch the full recent window via `fetch_us_data`.
     """
+    symbol = validate_symbol(symbol)
     # only implemented for US (yfinance) currently
     if market != "US":
         raise NotImplementedError("Incremental raw update currently only supported for US market")

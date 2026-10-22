@@ -105,7 +105,8 @@ def save_model(model: Any, metadata: dict, path: str | Path):
 
 def load_model(path: str | Path):
     torch, _, _ = _ensure_torch()
-    state = torch.load(str(path), map_location="cpu")
+    # weights_only avoids executing arbitrary code from a model artifact.
+    state = torch.load(str(path), map_location="cpu", weights_only=True)
     meta = state.get("metadata", {})
     model = _build_model(input_size=meta.get("input_size", 1))
     model.load_state_dict(state["state_dict"])

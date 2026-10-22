@@ -12,6 +12,7 @@ import numpy as np
 from services.feature_store import get_features, save_pipeline
 from services.models.train_pipeline import train_and_save_pipeline
 from services.models import registry
+from services.utils.helpers import validate_symbol
 
 
 def _models_dir():
@@ -36,6 +37,8 @@ def train_hmm_lstm(
     - Add regime to features and train LSTM to predict next-day direction
     - Save LSTM artifact and register models
     """
+    symbol = validate_symbol(symbol)
+
     # 1) Fit and persist pipeline
     training_pipeline = train_and_save_pipeline(symbol, overwrite=True, refresh=refresh_pipeline)
     save_pipeline(symbol, training_pipeline)

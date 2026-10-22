@@ -1,0 +1,15 @@
+.DS_Store
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+backend/db.sqlite3
+frontend/quant-atlas-webapp/node_modules/
+frontend/quant-atlas-webapp/.next/
+frontend/quant-atlas-webapp/out/
+*.tsbuildinfo

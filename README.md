@@ -1,112 +1,138 @@
 # QuantAtlas
 
-## About
+QuantAtlas is a quantitative-finance research prototype for processing market
+data, computing indicators, fitting research models, and running transparent
+long-only backtests. It is a research tool, **not** production trading
+infrastructure or investment advice.
 
-QuantAtlas is a quantitative-finance research and engineering prototype exploring financial data processing, quantitative analysis, modelling, backtesting, portfolio concepts, and software infrastructure for systematic-trading research.
+## What works
 
-### Why it exists
+- Django REST API with a vectorized daily backtest (`SMA`, `momentum`,
+  `mean-reversion`)
+- Metrics: total and annual return, volatility, Sharpe ratio, max drawdown,
+  turnover, trades, buy-and-hold comparison
+- Cached feature store with validated symbol paths and JSON transformation
+  pipelines
+- Optional HMM/LSTM training queue (Celery + Redis)
+- Next.js dashboard for running a backtest and inspecting metrics
+- Docker Compose stack: Django, Celery worker, Redis, Next.js, nginx
 
-Quantitative finance turns mathematical assumptions into executable research. QuantAtlas provides a place to experiment with financial data, models, indicators, and backtests while keeping research assumptions explicit and reproducible.
-
-## Features / Scope
-
-- Market-data processing
-- Quantitative indicators and models
-- Time-series experimentation
-- Backtesting concepts
-- Portfolio/trading-system research
-- Django-based backend components
-- Data/model experimentation
-
-## Tech Stack
-
-- Python
-- Django / Django REST Framework components
-- Scientific/data tooling defined by the backend dependencies
-- Relational database support
-
-## Architecture
-
-```text
-Market / research data
-       ↓
-Data ingestion + validation
-       ↓
-Feature / indicator computation
-       ↓
-Research models
-       ↓
-Backtest / portfolio evaluation
-       ↓
-Metrics + experiment artifacts
-```
-
-## Project Structure
+## Project structure
 
 ```text
 .
-├── backend/          # Django/backend components
-├── frontend/         # UI components where present
-├── models/            # Research/model components
-├── infrastructure/    # Environment/deployment support
-└── README.md
+├── backend/                  # Django apps, services, tests
+├── frontend/quant-atlas-webapp/  # Next.js dashboard
+├── infrastructure/           # Dockerfiles and nginx config
+├── data/                     # Small local market-data fixtures
+├── models/                   # Model artifacts
+├── docker-compose.yml
+└── requirements.txt          # Canonical Python dependency set
 ```
 
-## Prerequisites
+## Local development
 
-- Python 3.11+
-- pip
-- Database service required by the selected backend configuration
+Prerequisites: Python 3.11 or 3.12, Node 22, and (optionally) Redis.
 
-## Getting Started
+### Backend
 
 ```bash
-git clone https://github.com/matinwgg/QuantAtlas.git
-cd QuantAtlas
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+cp backend/.env.example .env
+# Export the variables from .env (or use your process manager).
+export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+export DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+export TRAINING_API_KEYS="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+
+cd backend
+python manage.py migrate
+python manage.py runserver
 ```
 
-Install the backend dependencies from `backend/requirements.txt`, configure environment variables, run database migrations, and start the Django service using the repository's current deployment configuration.
+The API is at `http://localhost:8000`.
 
-## Usage
+### Frontend
 
-A research workflow should be:
+```bash
+cd frontend/quant-atlas-webapp
+cp .env.example .env.local
+npm ci
+npm run dev
+```
 
-1. Ingest and validate data.
-2. Define features/indicators without future-data leakage.
-3. Fit or configure the model on the training period.
-4. Run the backtest on strictly separated evaluation data.
-5. Report returns, volatility, drawdown, turnover, and risk-adjusted metrics.
+Open `http://localhost:3000/dashboard`.
 
-## Mathematical Foundations
+### Tests and checks
 
-QuantAtlas uses probability, statistics, time-series analysis, covariance/correlation, regression, stationarity, numerical optimization, stochastic-process concepts, risk measures, and statistical model validation.
+```bash
+pytest                                   # service tests
+cd backend
+python manage.py test backtesting         # Django API tests
+bandit -r . -x data -ll                   # medium+ findings
+python manage.py check --deploy
+```
 
-## Testing & Research Validity
+Set `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, and
+`DJANGO_SECURE_SSL_REDIRECT=false` when running the Django test suite locally.
 
-Tests should cover data boundaries, deterministic calculations, API behavior, and model invariants. Backtests should explicitly address look-ahead bias, survivorship bias, transaction costs, slippage, multiple testing, and overfitting.
+## API
 
-## Security & Reliability
+```text
+GET  /api/backtest/run/?symbol=AAPL&strategy=sma
+GET  /api/features/get/?symbol=AAPL&limit=200
+POST /api/models/train/          # requires X-API-KEY or staff login
+GET  /api/models/train/<task_id>/ # requires X-API-KEY or staff login
+GET  /api/models/registry/       # requires X-API-KEY or staff login
+```
 
-Financial software requires strict secret management, authentication/authorization, input validation, auditability, data integrity, reproducibility, and separation between research and real-money execution. This repository is **not** production trading infrastructure or investment advice.
+`/api/features/get/` allows anonymous cached reads but requires an API key when
+`refresh=true`, because refreshing calls an upstream provider and writes to
+disk. Read endpoints are rate-limited. Training parameters, symbols, dates, and
+limits are validated server-side.
 
-## Future Work
+## Docker Compose
 
-- Complete environment-based production configuration
-- Authentication/RBAC for API surfaces
-- Stronger data lineage and experiment tracking
-- Transaction-cost/slippage models
-- Walk-forward and out-of-sample validation
-- Risk and portfolio analytics
-- CI/CD and security scanning
+```bash
+cp .env.example .env
+# Set DJANGO_SECRET_KEY and TRAINING_API_KEYS in .env.
+docker compose up --build
+```
 
-## Contributing
+Open `http://localhost:8080`. The local stack serves HTTP on port 8080. For a
+real deployment, terminate TLS at the edge, set
+`DJANGO_SECURE_SSL_REDIRECT=true`, and use a managed PostgreSQL/Redis service
+rather than the local SQLite volume.
 
-Research contributions should document datasets, time periods, assumptions, leakage controls, evaluation methodology, and statistical limitations.
+## Methodology and limitations
+
+- Positions are long-only and aligned to the return they earn; strategy helpers
+  shift signals by one day to avoid look-ahead.
+- Returns are daily log returns. The Sharpe ratio uses daily simple excess
+  returns annualized with 252 trading days; the risk-free rate defaults to zero.
+- Transaction costs, slippage, taxes, borrow costs, and market impact are not
+  modelled. Turnover is reported so these costs can be estimated separately.
+- The HMM/LSTM training pipeline is research code. It is not validated for live
+  trading, and model artifacts must be treated as trusted server-side data.
+- Do not load user-supplied pickle or PyTorch artifacts. HMM artifacts are
+  loaded only from the application's model directory; PyTorch checkpoints use
+  `weights_only=True`.
+- Backtests are in-sample unless the caller supplies a genuinely out-of-sample
+  dataset. Walk-forward validation and experiment tracking remain future work.
+
+## Security notes
+
+- Secrets come from environment variables; Django refuses to start without
+  `DJANGO_SECRET_KEY`.
+- Production mode sets secure cookies, HSTS, HTTPS redirect, and
+  content-type/referrer protections.
+- CORS and CSRF origins are explicit allow-lists.
+- Training callbacks are validated to prevent SSRF: public HTTPS only in
+  production, no credentials in URLs, no redirects, and a short timeout.
+- Symbol input is restricted to a safe character set before it is used in cache
+  or model paths.
 
 ## License
 
-See repository license information.
-
-## Author
-
-**A. Matin Odoom**
+MIT. See `LICENSE`.
