@@ -84,8 +84,9 @@ def prepare_features_for_model(df: pd.DataFrame, dropna: bool = True) -> pd.Data
         if df[col].dtype == object:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    # Basic imputation: forward/back fill then optional dropna
-    df = df.ffill().bfill()
+    # Forward-fill only: back-filling would pull future observations into
+    # earlier rows and leak information into training/evaluation.
+    df = df.ffill()
 
     if dropna:
         df = df.dropna()

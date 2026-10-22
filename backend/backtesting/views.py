@@ -1,26 +1,31 @@
+from __future__ import annotations
+
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from services.data.data_loader import fetch_market_data
-from services.strategies.sma import sma_crossover
-from services.strategies.momentum import momentum_strategy
-from services.strategies.mean_reversion import mean_reversion_strategy
 from services.backtesting.vectorized import run_vectorized_backtest
-from services.utils.helpers import validate_strategy
+from services.data.data_loader import fetch_market_data
 from services.features import add_technical_indicators
+from services.strategies.mean_reversion import mean_reversion_strategy
+from services.strategies.momentum import momentum_strategy
+from services.strategies.sma import sma_crossover
+from services.utils.helpers import validate_strategy, validate_symbol
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
 def run_backtest(request):
     """Run a research backtest for a validated strategy and symbol."""
-    symbol = request.GET.get("symbol", "AAPL").strip().upper()
-    strategy = request.GET.get("strategy", "sma").strip().lower()
-
-    if not symbol or len(symbol) > 20:
-        return Response({"error": "Invalid symbol"}, status=400)
+    try:
+        symbol = validate_symbol(request.GET.get("symbol", "AAPL"))
+        strategy = validate_strategy(request.GET.get("strategy", "sma"))
+    except ValueError as exc:
+        return Response({"error": str(exc)}, status=400)
 
     try:
-        validate_strategy(strategy)
         df = fetch_market_data(symbol)
         if df.empty:
             return Response({"error": "No market data available"}, status=404)
@@ -42,5 +47,5 @@ def run_backtest(request):
     except ValueError as exc:
         return Response({"error": str(exc)}, status=400)
     except Exception:
-        # Do not expose provider/library/internal exception details to clients.
+        logger.exception("Backtest failed for %s/%s", symbol, strategy)
         return Response({"error": "Unable to run backtest"}, status=500)

@@ -16,6 +16,7 @@ from .data.data_loader import (
     load_raw_cache,
     update_raw_data,
 )
+from .utils.helpers import validate_symbol
 
 
 BASE_FEATURE_DIR = Path(__file__).resolve().parents[2] / "data" / "features"
@@ -29,11 +30,19 @@ def _ensure_dir(path: Path):
 
 
 def feature_cache_path(symbol: str) -> Path:
-    return BASE_FEATURE_DIR / f"{symbol}.parquet"
+    symbol = validate_symbol(symbol)
+    path = BASE_FEATURE_DIR / f"{symbol}.parquet"
+    if not path.resolve().is_relative_to(BASE_FEATURE_DIR.resolve()):
+        raise ValueError("Invalid feature cache path")
+    return path
 
 
 def pipeline_path(symbol: str) -> Path:
-    return PIPELINE_DIR / f"{symbol}_pipeline.json"
+    symbol = validate_symbol(symbol)
+    path = PIPELINE_DIR / f"{symbol}_pipeline.json"
+    if not path.resolve().is_relative_to(PIPELINE_DIR.resolve()):
+        raise ValueError("Invalid pipeline path")
+    return path
 
 
 def load_pipeline(symbol: str) -> TransformPipeline | None:
@@ -42,8 +51,8 @@ def load_pipeline(symbol: str) -> TransformPipeline | None:
         return None
     try:
         return TransformPipeline.load(str(p))
-    except Exception:
-        return None
+    except Exception as exc:
+        raise ValueError(f"Invalid pipeline artifact for {symbol}") from exc
 
 
 def save_pipeline(symbol: str, pipeline: TransformPipeline):
@@ -58,6 +67,7 @@ def get_features(symbol: str, start: Optional[str] = None, end: Optional[str] = 
     - Applies `add_technical_indicators` and `prepare_features_for_model`.
     - Caches processed features to `data/features/{symbol}.parquet`.
     """
+    symbol = validate_symbol(symbol)
     market = detect_market(symbol)
 
     # update raw cache for US symbols if requested
@@ -91,9 +101,8 @@ def get_features(symbol: str, start: Optional[str] = None, end: Optional[str] = 
         if pipeline is not None:
             try:
                 df = pipeline.transform(df)
-            except Exception:
-                # non-fatal: continue with untransformed features
-                pass
+            except Exception as exc:
+                raise ValueError(f"Could not apply pipeline for {symbol}") from exc
 
     # persist features cache
     _ensure_dir(BASE_FEATURE_DIR)

@@ -30,5 +30,11 @@ app.conf.timezone = "UTC"
 #     },
 # }
 
-# Autodiscover tasks in the services.tasks module
+# Autodiscover tasks in the services.tasks module.
+# The package has no tasks.py, so import the task modules explicitly.
+app.conf.imports = (
+    "services.tasks.train_tasks",
+    "services.tasks.ingest_tasks",
+)
+app.conf.task_track_started = True
 app.autodiscover_tasks(["services.tasks"])

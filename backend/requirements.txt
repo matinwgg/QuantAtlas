@@ -1,2 +1,2 @@
-Django==6.0.4
- djangorestframework==3.16.1
+# The backend is part of the repository; keep one canonical dependency set.
+-r ../requirements.txt

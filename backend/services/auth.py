@@ -5,6 +5,8 @@ Usage:
     authorize_request(request)  # raises rest_framework.exceptions.PermissionDenied on failure
 """
 import os
+import secrets
+
 from django.conf import settings
 from rest_framework.exceptions import PermissionDenied
 
@@ -39,8 +41,11 @@ def authorize_request(request):
     except Exception:
         header_key = request.META.get("HTTP_X_API_KEY")
 
-    if header_key and header_key in allowed:
-        return True
+    if header_key:
+        # Compare every key to avoid leaking a match through timing.
+        for candidate in allowed:
+            if secrets.compare_digest(str(header_key), candidate):
+                return True
 
     user = getattr(request, "user", None)
     if user and getattr(user, "is_authenticated", False) and getattr(user, "is_staff", False):

@@ -31,10 +31,11 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=9090)
     args = parser.parse_args()
-    server = HTTPServer(('0.0.0.0', args.port), Handler)
-    print(f"Callback receiver listening on http://0.0.0.0:{args.port}/")
+    server = HTTPServer((args.host, args.port), Handler)
+    print(f"Callback receiver listening on http://{args.host}:{args.port}/")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
